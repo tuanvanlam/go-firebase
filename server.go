@@ -2,24 +2,29 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"go-firebase/controller"
+	router "go-firebase/http"
+	"go-firebase/repository"
+	"go-firebase/service"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
-func handle(response http.ResponseWriter, _ *http.Request) {
-	_, _ = fmt.Fprintln(response, "Up and running...")
-}
+var (
+	postRepository = repository.NewFirestoreRepository()
+	postService    = service.NewPostService(postRepository)
+	postController = controller.NewPostController(postService)
+	httpRouter     = router.NewChiRouter()
+)
 
 func main() {
-	router := mux.NewRouter()
 	const port string = ":8080"
 
-	router.HandleFunc("/", handle)
-	router.HandleFunc("/posts", getPosts).Methods(http.MethodGet)
-	router.HandleFunc("/posts", addPost).Methods(http.MethodPost)
+	httpRouter.GET("/", func(response http.ResponseWriter, _ *http.Request) {
+		_, _ = fmt.Fprintln(response, "Up and running...")
+	})
 
-	log.Println("Server listening on port", port)
-	log.Fatalln(http.ListenAndServe(port, router))
+	httpRouter.GET("/posts", postController.GetPosts)
+	httpRouter.POST("/posts", postController.AddPost)
+
+	httpRouter.SERVE(port)
 }
