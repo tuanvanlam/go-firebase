@@ -12,7 +12,7 @@ type controller struct {
 }
 
 var (
-	postSerivce service.PostService
+	postService service.PostService
 )
 
 type PostController interface {
@@ -21,14 +21,14 @@ type PostController interface {
 }
 
 func NewPostController(service service.PostService) PostController {
-	postSerivce = service
+	postService = service
 	return &controller{}
 }
 
 func (*controller) GetPosts(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-type", "application/json")
 
-	posts, err := postSerivce.FindAll()
+	posts, err := postService.FindAll()
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(response).Encode(errors.ServiceError{Message: "Error getting the posts"})
@@ -49,14 +49,14 @@ func (*controller) AddPost(response http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	err = postSerivce.Validate(&post)
+	err = postService.Validate(&post)
 	if err != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(response).Encode(errors.ServiceError{Message: err.Error()})
 		return
 	}
 
-	result, err := postSerivce.Create(&post)
+	result, err := postService.Create(&post)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(response).Encode(errors.ServiceError{Message: "Error saving the post"})
